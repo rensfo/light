@@ -3,7 +3,8 @@
 		options : {
 			//parent : "#content",
 			code : "",
-			caption : ""
+			caption : "",
+			menu : $("<ul style=\"position:absolute\"><li code=\"add\"><a>Добавить</a></li><li code=\"edit\"><a>Редактировать</a></li><li code=\"del\"><a>Удалить</a></li><li code=\"refresh\"><a>Обновить</a></li></ul>")
 		},
 		_create : function() {
 
@@ -43,7 +44,7 @@
 			var $this = this, data = this.element.data();
 			if(options.code != this.element.children().first().attr("id")) {
 				if(this.element.children().size() > 0)
-				this._minimized.call(this);
+					this._minimized.call(this);
 				if(data[options.code]) {
 					data[options.code].appendTo(this.element);
 				} else {
@@ -61,7 +62,7 @@
 		},
 		_parseForm : function(options) {
 			var f = $("<div>", {
-				id : options.id
+				id : "f_" + options.id
 			})
 			if(options.hasTree) {
 				f.append(this._parseTree.call(this, options));
@@ -71,7 +72,7 @@
 			return f;
 		},
 		_parseTable : function(options) {
-			var grid, cont = $("<div>");
+			var grid, cntx, cont = $("<div>"), $this = this;
 			if(options.items.length > 1) {
 				for(t in options.items) {
 
@@ -103,10 +104,49 @@
 						return $.extend(postdata, {
 							part : options.items[0].id
 						});
+					},
+					ondblClickRow : function(rowid, iRow, iCol, e) {
+						grid.jqGrid('editGridRow', rowid, {});
+					},
+					onRightClickRow : function(rowid, iRow, iCol, e) {
+						grid.jqGrid("setSelection", rowid);
+						cntx
+						.show()
+						.position({
+							my: "left top",
+							at: "left top",
+							of: e
+						});
+						e.stopPropagation();
+						e.preventDefault();
+					},
+					gridComplete : function() {
+
 					}
 				}).filterToolbar({
 					searchOnEnter : true
 				});
+				cntx = this.options.menu.clone().appendTo(cont).menu({
+					select : function(event, ui) {
+						switch(ui.item.attr("code")) {
+							case "add":
+								grid.jqGrid('editGridRow', "new", {});
+								break;
+							case "edit":
+
+								break;
+							case "del":
+								grid.jqGrid('delGridRow', grid.jqGrid("getGridParam", "selarrrow"), {});
+								break;
+							case "refresh":
+								grid.trigger("reloadGrid");
+								break;
+							default:
+								break;
+						}
+						cntx.hide();
+					}
+				}).hide();
 			}
 			return cont;
 		},
