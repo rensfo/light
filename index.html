@@ -18,6 +18,7 @@
         <script src="js/jquery.jqGrid.min.js"></script>
         
         <script src="js/init.js"></script>
+        <script src="js/part.js"></script>
         
         
         <link rel="stylesheet" href="css/ui-darkness/jquery-ui-1.8.19.custom.css" />
@@ -42,9 +43,38 @@
         	<li><a>Словари</a>
         		<ul>
         			<li><a>Контрагенты</a></li>
+        			<li><a>Тип лампы</a></li>
+        			<li part="dicHeight"><a>Высота</a></li>
+        			<li><a>Корреляции</a>
+        				<ul>
+        					<li><a>Причина</a></li>
+        					<li><a>Комментарий устранения</a></li>
+        				</ul>
+        			</li>
+        			<li><a>Режим работы светильника</a></li>
+        			<li part="docType"><a>Тип документа</a></li>
+        			<li><a>Дорога</a>
+        				<ul>
+        					<li><a>Категория</a></li>
+        					<li><a>Режим категории</a></li>
+        				</ul>
+        			</li>
+        			<li><a>Материал</a></li>
+        			<li><a>Инцидент</a>
+        				<ul>
+        					<li><a>Ошибка</a></li>
+        					<li><a>Типовое решение</a></li>
+        				</ul>
+        			</li>
         		</ul>
         	</li>
-        	
+        	<li><a>Админ</a>
+        		<ul>
+        			<li><a>Логирование</a></li>
+        			<li><a>План освещения</a></li>
+        			<li><a>Организации</a></li>
+        		</ul>
+        	</li>
         </ul>
 		<div id="content" class="ui-widget ui-widget-content" style="margin-top:1px;height:300px;"></div>
     </body>
