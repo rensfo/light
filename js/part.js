@@ -72,17 +72,25 @@
 			return f;
 		},
 		_parseTable : function(options) {
-			var grid, cntx, cont = $("<div>"), $this = this;
-			if(options.items.length > 1) {
-				for(t in options.items) {
-
+			var grid, cntx, cont = $("<div>"), $this = this, tab;
+			options.items = _strToFunc.call(this, options.items);
+			//if(options.items.length > 1) {
+			for(t in options.items) {
+				var tabcont;
+				if(options.items.length > 1) {
+					if(!tab) {
+						tab = $("<div>").tabs();
+					}
+					//ДОДЕЛАТЬ С ДОБАВЛЕНИЕМ ЗАКЛАДОК
+					tab.tabs("add", "#tab-", options.items[t].caption);
 				}
-			} else {
+				//}
+				//} else {
 				grid = $("<table>", {
-					id : this._generateId(options.id)
-				}).appendTo(cont).jqGrid({
+					id : this._generateId(options.items[t].id)
+				}).appendTo(tabcont || cont).jqGrid({
 					altRows : true,
-					caption : options.items[0].caption,
+					caption : options.items[t].caption,
 					multiselect : true,
 					multiboxonly : true,
 					rownumbers : true,
@@ -90,7 +98,7 @@
 					datatype : "json",
 					mtype : "GET",
 					colNames : [],
-					colModel : options.items[0].colModel,
+					colModel : options.items[t].colModel,
 					url : "datasource/datasource.php",
 					jsonReader : {
 						repeatitems : false,
@@ -102,30 +110,55 @@
 					serializeGridData : function(postdata) {
 						//postdata.page = 1;
 						return $.extend(postdata, {
-							part : options.items[0].id
+							userData : $.extend({}, this.p.userData || {}, {
+								part : options.items[t].id
+							})
 						});
 					},
 					ondblClickRow : function(rowid, iRow, iCol, e) {
 						grid.jqGrid('editGridRow', rowid, {});
 					},
 					onRightClickRow : function(rowid, iRow, iCol, e) {
-						grid.jqGrid("setSelection", rowid);
-						cntx
-						.show()
-						.position({
-							my: "left top",
-							at: "left top",
-							of: e
+						var arrrow = grid.jqGrid("getGridParam", "selarrrow");
+						if(arrrow.length != 1)
+							grid.jqGrid("setSelection", rowid, true);
+						/*else
+							grid.jqGrid("setSelection", rowid, false);*/
+						cntx.show().position({
+							my : "left top",
+							at : "left top",
+							of : e
+						});
+						$this.document.one("mousedown", function(event) {
+							if(cntx.is(":visible") && !$(event.target).closest(cntx).length) {
+								cntx.hide();
+							}
 						});
 						e.stopPropagation();
 						e.preventDefault();
+						//return false;
 					},
 					gridComplete : function() {
-
-					}
+						var $g = $(this), $arr = $g.jqGrid("getDataIDs");
+						if($arr.length > 0)
+							$g.jqGrid("setSelection", $arr[0], true);
+					},
+					onSelectRow : function(rowid, status) {
+						var items = options.items[t].items;
+						
+						for(var i in items) {
+							items[i].grid.jqGrid("setGridParam", {
+								userData : $.extend(items[i].grid.jqGrid("getGridParam", "userData") || {}, {
+									prn : status ? rowid : ""
+								})
+							}).trigger("reloadGrid");
+						}
+					},
+					userData : options.items[t].userData || {}
 				}).filterToolbar({
 					searchOnEnter : true
 				});
+				options.items[t].grid = grid;
 				cntx = this.options.menu.clone().appendTo(cont).menu({
 					select : function(event, ui) {
 						switch(ui.item.attr("code")) {
@@ -133,7 +166,7 @@
 								grid.jqGrid('editGridRow', "new", {});
 								break;
 							case "edit":
-
+								grid.jqGrid('editGridRow', grid.jqGrid("getGridParam", "selrow"), {});
 								break;
 							case "del":
 								grid.jqGrid('delGridRow', grid.jqGrid("getGridParam", "selarrrow"), {});
@@ -147,8 +180,62 @@
 						cntx.hide();
 					}
 				}).hide();
+				options.items[t].cntx = cntx;
+				//}
+				if(options.items[t].items.length > 0) {
+					cont.append(this._parseTable.call(this, options.items[t]));
+				}
 			}
 			return cont;
+
+			function _strToFunc(items) {
+				var newItems = items;
+				for(var i in newItems) {
+					for(var c in newItems[i].colModel) {
+						if(newItems[i].colModel[c].edittype == "custom") {
+							newItems[i].colModel[c].editoptions = eval(newItems[i].colModel[c].editoptions);
+						}
+					}
+					if(newItems[i].items.length > 0) {
+						newItems[i].items = _strToFunc.call(this, newItems[i].items);
+					}
+				}
+				return newItems;
+			}
+
+		},
+		_customEditing : {
+			lightingMode : {
+				custom_element : function(value, options) {
+					var el = $("<input>", {
+						type : "text",
+						value : value
+					}).autocomplete({
+						source : function(request, response) {
+							$.getJSON("datasource/dataAutocomplete.php", $.extend(request, {
+								dictionary : "lightingMode"
+							}), function(data) {
+								response(data);
+							});
+						},
+						minLength : 1,
+						select : function(event, ui) {
+
+						}
+					});
+					el.data("autocomplete")._renderItem = function(ul, item) {
+						return $("<li></li>").data("item.autocomplete", item).append("<a>Код: " + item.value + "<br>Наименование: " + item.label + "</a>").appendTo(ul);
+					};
+					return el;
+				},
+				custom_value : function(elem, operation, value) {
+					if(operation === 'get') {
+						return $(elem).filter("input").val();
+					} else if(operation === 'set') {
+						$(elem).filter("input").val(value);
+					}
+				}
+			}
 		},
 		_parseTree : function() {
 
