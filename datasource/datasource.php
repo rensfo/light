@@ -10,11 +10,34 @@ $sord = $_GET["sord"];
 $p = array("page" => 1, "total" => 1, "records" => 1, "rows" => array());
 switch($pName) {
 	case "pHeight" :
-	/*
-	 *Тут будет подключение к БД и отбор данных
-	 *  */
-		$p["rows"] = array( array("id" => "1", "code" => "9"), array("id" => "2", "code" => "12"), array("id" => "3", "code" => "6"));
-		$p["records"] = count($p["rows"]);
+		$dbhost = "localhost";
+		$dbuser = "test";
+		$dbpassword = "1";
+		$db = mysql_connect($dbhost, $dbuser, $dbpassword) or die("Connection Error: " . mysql_error());
+		mysql_select_db("light") or die("Error conecting to db.");
+		$result = mysql_query("SELECT COUNT(*) AS count FROM v_height"); 
+		$row = mysql_fetch_array($result, MYSQL_ASSOC); 
+		$count = $row['count']; 
+		if( $count >0 ) {
+			 $total_pages = ceil($count/$rows); 
+		} else {
+			 $total_pages = 0; 
+		} 
+		if ($page > $total_pages) 
+			$page=$total_pages; 
+		$start = $rows*$page - $rows; 
+		// do not put $limit*($page - 1) 
+		$SQL = "SELECT * FROM v_height ORDER BY $sidx $sord LIMIT $start , $rows"; // ORDER BY $sidx $sord LIMIT $start , $limit
+		$result = mysql_query( $SQL ) or die("Couldn't execute query.".mysql_error());
+		$p->page = $page; 
+		$p->total = $total_pages; 
+		$p->records = $count;
+		$i=0; 
+		$p["rows"] = array();
+		while($row = mysql_fetch_array($result, MYSQL_ASSOC)) {
+			 $p["rows"][$i] = array("id"=>$row["nrn"], "scode"=>$row["scode"]);
+			 $i++;
+		}
 		break;
 	case "pDocType" :
 		$p["rows"] = array( array("id" => "1", "code" => "Приказ", "name"=>"Приказ"), array("id" => "2", "code" => "Распоряжение", "name"=>"Распоряжение"), array("id" => "3", "code" => "Служебная", "name"=>"Служебная"));

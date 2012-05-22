@@ -7,7 +7,7 @@
 			menu : $("<ul style=\"position:absolute\"><li code=\"add\"><a>Добавить</a></li><li code=\"edit\"><a>Редактировать</a></li><li code=\"del\"><a>Удалить</a></li><li code=\"refresh\"><a>Обновить</a></li></ul>")
 		},
 		_create : function() {
-
+			this.element.first().height(window.innerHeight - $("#menubar").outerHeight() - 18);
 		},
 		_render : function() {
 
@@ -100,6 +100,7 @@
 					colNames : [],
 					colModel : options.items[t].colModel,
 					url : "datasource/datasource.php",
+					editurl : "datasource/editdata.php",
 					jsonReader : {
 						repeatitems : false,
 						id : "0"
@@ -123,7 +124,7 @@
 						if(arrrow.length != 1)
 							grid.jqGrid("setSelection", rowid, true);
 						/*else
-							grid.jqGrid("setSelection", rowid, false);*/
+						 grid.jqGrid("setSelection", rowid, false);*/
 						cntx.show().position({
 							my : "left top",
 							at : "left top",
@@ -145,7 +146,7 @@
 					},
 					onSelectRow : function(rowid, status) {
 						var items = options.items[t].items;
-						
+
 						for(var i in items) {
 							items[i].grid.jqGrid("setGridParam", {
 								userData : $.extend(items[i].grid.jqGrid("getGridParam", "userData") || {}, {
@@ -163,13 +164,25 @@
 					select : function(event, ui) {
 						switch(ui.item.attr("code")) {
 							case "add":
-								grid.jqGrid('editGridRow', "new", {});
+								grid.jqGrid('editGridRow', "new", {
+									editData : {
+										part : options.items[t].id
+									}
+								});
 								break;
 							case "edit":
-								grid.jqGrid('editGridRow', grid.jqGrid("getGridParam", "selrow"), {});
+								grid.jqGrid('editGridRow', grid.jqGrid("getGridParam", "selrow"), {
+									editData : {
+										part : options.items[t].id
+									}
+								});
 								break;
 							case "del":
-								grid.jqGrid('delGridRow', grid.jqGrid("getGridParam", "selarrrow"), {});
+								grid.jqGrid('delGridRow', grid.jqGrid("getGridParam", "selarrrow"), {
+									delData : {
+										part : options.items[t].id
+									}
+								});
 								break;
 							case "refresh":
 								grid.trigger("reloadGrid");
