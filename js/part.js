@@ -9,8 +9,48 @@
 		_create : function() {
 			this.element.first().height(window.innerHeight - $("#menubar").outerHeight() - 18);
 		},
-		_render : function() {
+		render: function(){
+			this.element.first().height(window.innerHeight - $("#menubar").outerHeight() - 18);
+			var data = this.element.children().first().data();
+			if(data){
+				this._render(data);
+			}
+		},
+		_render : function(options) {
+			var data = this.element.data(), 
+				stdGridWidth = this.element.innerWidth()- 5 - (this.element.find("div.ui-catalog").outerWidth()||0),
+				maxLvl = getMaxLevel(options.items),
+				maxHeight = this.element.innerHeight()- 5,
+				sectionHeight = Math.floor(maxHeight/maxLvl);
+			setParam(options.items, maxHeight);
 
+			function setParam(items, maxHeight) {
+				var curHeight, curMaxLvl, headerHeight, captionHeight;
+				for(var i in items) {
+					curMaxLvl = getMaxLevel(items[i].items);
+					headerHeight = $(items[i].grid[0].grid.hDiv).outerHeight();
+					captionHeight = $(items[i].grid[0].grid.cDiv).outerHeight();
+					curHeight = Math.floor(maxHeight/curMaxLvl) - headerHeight - captionHeight;
+					items[i].grid
+						.jqGrid("setGridWidth", stdGridWidth)
+						.jqGrid("setGridHeight", curHeight);
+					if(items[i].items.length > 0){
+						setParam(items[i].items, maxHeight - curHeight - headerHeight - captionHeight);
+					}
+				}
+			}
+			function getMaxLevel(items){
+				var l = 1;
+				for(var i in items){
+					if(items[i].items.length >0){
+						l += getMaxLevel(items[i].items);
+					}
+					else {
+						l++;
+					}
+				}
+				return l;
+			}
 		},
 		_generateId : function(id) {
 			var $id = id;
@@ -42,7 +82,7 @@
 		open : function(options) {
 			//this._render();
 			var $this = this, data = this.element.data();
-			if(options.code != this.element.children().first().attr("id")) {
+			if("f_" + options.code != this.element.children().first().attr("id")) {
 				if(this.element.children().size() > 0)
 					this._minimized.call(this);
 				if(data[options.code]) {
@@ -53,6 +93,8 @@
 					}, function(data, textStatus, jqXHR) {
 						if($.isPlainObject(data)) {
 							$this.element.append($this._parseForm.call($this, data));
+							$this.element.children().first().data(data);
+							$this._render.call($this, data);
 						} else {
 							alert("Ошибка:\n" + data);
 						}
@@ -69,6 +111,7 @@
 			} else {
 				f.append(this._parseTable.call(this, options));
 			}
+
 			return f;
 		},
 		_parseTable : function(options) {

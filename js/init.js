@@ -13,4 +13,7 @@ $(function() {
 		}
 	});
 	$("#content").part();
+	$(window).resize(function(){
+		$("#content").part("render");
+	});
 });
